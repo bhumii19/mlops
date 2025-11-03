@@ -1,0 +1,144 @@
+# 1. Install required libraries
+#pip install transformers datasets peft accelerate torch evaluate bitsandbytes -q
+
+# 2. Import libraries
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
+from datasets import load_dataset
+from peft import LoraConfig, get_peft_model
+import evaluate
+import torch
+
+# 3. Load dataset (Yelp small subset for demo)
+dataset = load_dataset("yelp_review_full", split="train[:1%]").train_test_split(test_size=0.1)
+
+# 4. Load model and tokenizer
+model_name = "distilgpt2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Fix padding issue (IMPORTANT)
+tokenizer.pad_token = tokenizer.eos_token  # set pad token same as eos token
+
+model = AutoModelForCausalLM.from_pretrained(model_name)
+
+# 5. Apply LoRA configuration
+lora_config = LoraConfig(
+    r=8,
+    lora_alpha=32,
+    target_modules=["c_attn"],
+    lora_dropout=0.05,
+    bias="none",
+)
+model = get_peft_model(model, lora_config)
+print("LoRA adapters added successfully!")
+
+# 6. Tokenize dataset
+def tokenize_function(example):
+    return tokenizer(
+        example["text"],
+        truncation=True,
+        padding="max_length",
+        max_length=128,
+    )
+
+tokenized_datasets = dataset.map(tokenize_function, batched=True, remove_columns=["text", "label"])
+
+# 7. Data collator for padding
+def collate_fn(batch):
+    input_ids = torch.tensor([f["input_ids"] for f in batch])
+    attention_mask = torch.tensor([f["attention_mask"] for f in batch])
+    return {"input_ids": input_ids, "attention_mask": attention_mask, "labels": input_ids}
+
+# 8. Training configuration (compatible with older Transformers versions)
+training_args = TrainingArguments(
+    output_dir="./results",
+    per_device_train_batch_size=2,
+    per_device_eval_batch_size=2,
+    num_train_epochs=1,
+    logging_steps=10,
+    save_strategy="epoch",       # keep save strategy
+    eval_strategy="epoch",       # changed from evaluation_strategy
+    fp16=True,
+    report_to=[]                 # disable wandb and other trackers
+)
+
+
+# 9. Initialize Trainer
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized_datasets["train"],
+    eval_dataset=tokenized_datasets["test"],
+    data_collator=collate_fn,
+)
+
+# 10. Train model
+trainer.train()
+
+# 11. Evaluate using perplexity manually
+from math import exp
+
+model.eval()
+text = "The food was great and the service was excellent."
+inputs = tokenizer(text, return_tensors="pt").to(model.device)
+
+with torch.no_grad():
+    outputs = model(**inputs, labels=inputs["input_ids"])
+    loss = outputs.loss
+    perplexity = exp(loss.item())
+
+print("Perplexity:", perplexity)
+
+
+# 12. Generate text
+input_prompt = "Once upon a time"
+inputs = tokenizer(input_prompt, return_tensors="pt").to(model.device)
+output = model.generate(**inputs, max_length=50)
+print("Generated Text:", tokenizer.decode(output[0], skip_special_tokens=True))
+
+
+
+
+
+
+
+
+#
+Title: 
+Fine-Tuning a Transformer-based Text Generation Model using LoRA (Low-Rank Adaptation) Objective: 
+To implement and fine-tune a lightweight transformer-based language model (DistilGPT-2)  using Low-Rank Adaptation (LoRA) on a small text corpus, generate coherent text samples,  and evaluate the model using perplexity as a metric. 
+Problem Statement: 
+Transformer-based models like GPT-2 are powerful for natural language generation tasks,  but fine-tuning these models often requires significant computational resources. This  experiment demonstrates how to fine-tune a compact pre-trained model using LoRA and  assess its performance through text generation and perplexity. 
+Outcome: 
+By completing this experiment, students will: 
+∙ Understand the architecture of transformer-based text generation models like GPT 2. 
+∙ Learn how to apply LoRA for efficient fine-tuning of large language models. ∙ Generate coherent text from a fine-tuned model. 
+Theory: 
+1. Transformer-based Text Generation 
+Transformer architectures, introduced in the paper “Attention is All You Need”, have  become the backbone of modern NLP. Models like GPT-2 generate text by predicting the  next word in a sequence based on the preceding context using self-attention mechanisms. 
+DistilGPT-2 is a distilled (compressed) version of GPT-2, trained to retain most of GPT-2’s  performance with fewer parameters, making it more suitable for academic and resource limited environments. 
+2. Fine-Tuning Language Models 
+Fine-tuning involves adapting a pre-trained model to a specific domain or task using a new  dataset. While this process typically updates all parameters of the model, doing so on large  models like GPT-2 can be computationally expensive. 
+3. What is LoRA (Low-Rank Adaptation)? 
+LoRA is a technique that reduces the number of trainable parameters in a model during fine tuning:
+Instead of updating the entire weight matrices, it injects trainable low-rank matrices  into each layer. 
+∙ These matrices are much smaller and easier to train. 
+∙ After training, only the LoRA layers are saved and added to the base model. 
+This makes LoRA extremely efficient in terms of computation and memory, without  significantly compromising model performance. 
+4. Workflow of the Experiment 
+1. Dataset Preparation: Use a small domain-specific or general-purpose text dataset  (e.g., news articles, stories). 
+2. Model Selection: Load DistilGPT-2 using the Hugging Face transformers library. 
+3. Apply LoRA: Use peft (Parameter-Efficient Fine-Tuning) or transformers with LoRA  wrappers to apply LoRA layers. 
+4. Fine-Tune: Train the model on the dataset using minimal compute resources (e.g.,  Google Colab). 
+5. Generate Text: Provide a starting prompt and allow the model to generate coherent  completions. 
+6. Evaluate Using Perplexity: Calculate perplexity on a validation set to measure how  well the model predicts sequences. Lower perplexity indicates better performance. 
+5. Perplexity as Evaluation Metric 
+Perplexity measures how “surprised” the model is by the actual next word in a sequence. It  is defined as the exponentiated average negative log-likelihood: 
+
+Lower perplexity means the model is better at predicting the next word, hence generating  more coherent and grammatically correct text. 
+6. Tools Used 
+∙ Hugging Face Transformers: For loading and interacting with pre-trained models like  DistilGPT-2. 
+∙ PEFT/LoRA Libraries: For efficient fine-tuning. 
+∙ Google Colab: For training on limited compute resources. 
+∙ Datasets: From Hugging Face’s datasets hub or custom-curated text files. Conclusion: 
+This experiment introduces students to efficient model fine-tuning using LoRA, a highly  practical method in resource-constrained environments. By fine-tuning a compact GPT-2  model and evaluating it with perplexity, students gain hands-on experience in language  modeling, transfer learning, and practical generative AI deployment strategies.
+

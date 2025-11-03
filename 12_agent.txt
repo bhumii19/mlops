@@ -1,0 +1,139 @@
+import random
+
+# Environment Setup
+class Environment:
+    def __init__(self, size):
+        self.size = size
+        self.grid = [[random.choice(['food', 'tool', 'hazard', 'empty']) for _ in range(size)] for _ in range(size)]
+
+    def get_cell(self, x, y):
+        return self.grid[x][y]
+
+    def show(self):
+        for row in self.grid:
+            print(row)
+
+# Agent Setup
+class Agent:
+    def __init__(self, name, env):
+        self.name = name
+        self.env = env
+        self.x = random.randint(0, env.size - 1)
+        self.y = random.randint(0, env.size - 1)
+        self.health = 100
+        self.inventory = []
+
+    def move(self):
+        direction = random.choice(['up', 'down', 'left', 'right'])
+        if direction == 'up' and self.x > 0:
+            self.x -= 1
+        elif direction == 'down' and self.x < self.env.size - 1:
+            self.x += 1
+        elif direction == 'left' and self.y > 0:
+            self.y -= 1
+        elif direction == 'right' and self.y < self.env.size - 1:
+            self.y += 1
+
+    def act(self):
+        cell = self.env.get_cell(self.x, self.y)
+        if cell == 'food':
+            self.health += 10
+            self.env.grid[self.x][self.y] = 'empty'
+            return f"{self.name} collected food and gained health."
+        elif cell == 'tool':
+            self.inventory.append('tool')
+            self.env.grid[self.x][self.y] = 'empty'
+            return f"{self.name} found a tool."
+        elif cell == 'hazard':
+            self.health -= 15
+            return f"{self.name} hit a hazard and lost health."
+        else:
+            return f"{self.name} found nothing."
+
+    def status(self):
+        return f"{self.name}: Health={self.health}, Inventory={self.inventory}, Position=({self.x},{self.y})"
+
+# Simulation
+def simulate_game(num_agents=3, rounds=5, size=5):
+    env = Environment(size)
+    agents = [Agent(f"Agent_{i+1}", env) for i in range(num_agents)]
+
+    print("Initial Environment:")
+    env.show()
+    print("\nStarting Simulation...\n")
+
+    for r in range(1, rounds + 1):
+        print(f"=== Round {r} ===")
+        for agent in agents:
+            agent.move()
+            action_result = agent.act()
+            print(action_result)
+        print("\nStatus after round:")
+        for agent in agents:
+            print(agent.status())
+        print("-" * 40)
+
+    print("\nFinal Environment State:")
+    env.show()
+
+# Run Simulation
+if __name__ == "__main__":
+    random.seed(42)
+    simulate_game()
+
+
+
+
+
+
+
+
+#
+Title: 
+Building a Simple Autonomous AI Agent and Simulating Multi-Agent Interaction for Text Based Tasks 
+Objective: 
+To implement a basic autonomous AI agent using Python that can perform decision-making  in a simulated text-based environment. Extend the simulation to include multiple interacting  agents and analyze their behavior and outcomes. 
+Problem Statement: 
+This experiment involves creating such agents for text-based tasks and observing their  interactions in a simple simulated scenario. 
+Outcome: 
+By the end of this experiment, students will be able to: 
+∙ Understand the principles of autonomous agents in AI. 
+∙ Implement a decision-making agent using basic logic and data structures. ∙ Simulate multi-agent interactions in a text-based environment. 
+Theory: 
+1. What is an Autonomous AI Agent? 
+An autonomous AI agent is a software system that can: 
+∙ Sense its environment (e.g., input data or simulated world state), 
+∙ Decide on actions using a decision-making process (rules, heuristics, or models), ∙ Act to change the environment or achieve goals. 
+In AI, agents are often designed to operate independently, sometimes in coordination with  other agents in multi-agent systems (MAS). 
+2. Characteristics of AI Agents 
+Feature Description 
+Autonomy - Acts without external intervention 
+Perception - Interprets input from the environment 
+Reasoning - Makes decisions based on goals and data
+Action - Affects the environment via outputs or moves 
+3. Multi-Agent Systems (MAS) 
+MAS involves multiple agents that operate in a shared environment. Agents can: ∙ Collaborate to complete complex tasks 
+∙ Compete for limited resources 
+∙ Negotiate or share information 
+4. Text-Based Task Example: Resource Gathering Game 
+A simple simulation can be designed where: 
+∙ Agents explore a grid-like environment (2D array). 
+∙ Each cell contains food, tools, or hazards. 
+∙ Agents decide whether to move, collect, avoid, or share resources. ∙ Their state (health, inventory) changes based on decisions. 
+5. Agent Design and Logic 
+∙ Attributes: name, health, energy, inventory, location. 
+∙ Perception: view of nearby grid cells. 
+∙ Decision function: rule-based (e.g., "If food nearby, move toward it"). ∙ Action: move, collect, interact. 
+6. Key Concepts Demonstrated 
+∙ Rule-based decision-making 
+∙ Environmental simulation with dynamic updates 
+∙ Interaction protocols (e.g., cooperation vs. competition) 
+∙ Logging and analysis of agent outcomes 
+7. Analysis of Results 
+After simulation: 
+∙ Track each agent’s score (e.g., resources collected, survival time). 
+∙ Compare cooperation vs. competition strategies. 
+∙ Analyze which decision rules led to better outcomes. 
+∙ Evaluate fairness and effectiveness of agent behavior. 
+Conclusion:
+This experiment introduces the foundational concept of autonomous and multi-agent  systems. Through a simple Python simulation, students gain practical experience in  designing, implementing, and analyzing the behavior of agents in dynamic environments.  This knowledge connects to real-world AI systems like chatbots, game AI, self-driving  decision systems, and multi-agent coordination frameworks used in robotics and smart  systems.

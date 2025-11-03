@@ -1,0 +1,78 @@
+#pip install -q diffusers transformers accelerate safetensors
+
+# Colab Python cell
+from diffusers import StableDiffusionPipeline
+import torch
+from PIL import Image
+import matplotlib.pyplot as plt
+
+# 1. choose device
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+# 2. load pipeline (uses HF model id; requires huggingface token for some models)
+model_id = "runwayml/stable-diffusion-v1-5"  # common public model
+pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16 if device=="cuda" else torch.float32)
+pipe = pipe.to(device)
+
+# 3. prompt & generation
+prompt = "a colorful painting of a cat sitting on a windowsill, sunlit, cinematic"
+images = pipe(prompt, guidance_scale=7.5, num_inference_steps=50).images  # guidance_scale controls strength
+
+# 4. display
+img = images[0]
+plt.figure(figsize=(6,6))
+plt.imshow(img)
+plt.axis("off")
+plt.show()
+
+
+
+
+
+
+#
+Title: 
+Text-to-Image Generation using a Pre-trained CLIP-Guided Diffusion Model Objective: 
+To perform text-to-image generation using a pre-trained CLIP-guided diffusion model. The  experiment aims to understand how text prompts can condition image generation and  evaluate the results using qualitative methods or metrics like Fréchet Inception Distance  (FID). 
+Problem Statement: 
+Text-to-image synthesis is a powerful application of generative AI where a system generates  images that match a given textual description. This experiment explores how CLIP  (Contrastive Language–Image Pretraining) can guide a diffusion model to generate  semantically accurate images from prompts, enabling natural language control over the  generative process. 
+Outcome: 
+By the end of this experiment, students will: 
+∙ Understand the concept of CLIP-guided diffusion models. 
+∙ Generate images using natural language prompts. 
+∙ Use visual assessment and optionally FID score to evaluate the quality of generated  images. 
+Theory: 
+1. What is CLIP? 
+CLIP (Contrastive Language–Image Pretraining), developed by OpenAI, is a neural network  trained to understand the relationship between images and text. It learns a shared  embedding space for both modalities, meaning it can match an image to a relevant caption  or vice versa. 
+∙ CLIP uses a transformer-based text encoder and a vision encoder (like ResNet or  Vision Transformer). 
+∙ It is trained on a large dataset of image-text pairs using contrastive learning. 2. What are CLIP-Guided Diffusion Models? 
+Diffusion models generate images through a step-by-step denoising process. In CLIP-guided  diffusion: 
+∙ The generation is conditioned on a text prompt.
+CLIP is used to evaluate the similarity between the generated image and the prompt. 
+∙ The image is optimized so that its CLIP embedding aligns with the embedding of the  text. 
+3. Text-to-Image Generation Process 
+The pipeline for CLIP-guided diffusion includes: 
+1. Start from a noise image. 
+2. At each denoising step, check the similarity between the generated image and the  text prompt using CLIP. 
+3. Adjust the generation path to maximize similarity. 
+4. Continue until a clear, semantically relevant image is produced. 
+4. Evaluation of Generated Images 
+There are two common ways to evaluate generated images: 
+A. Visual Quality Assessment 
+∙ Use human judgment to check whether the image matches the text description. ∙ Criteria include coherence, relevance, detail, and realism. 
+B. Fréchet Inception Distance (FID) 
+∙ A metric to compare distributions of generated and real images. 
+∙ Lower FID = better quality and diversity. 
+5. Relevance in Industry 
+CLIP-guided diffusion is a key technique behind: 
+∙ Stable Diffusion: Open-source image generation from prompts. 
+∙ DALL·E 2: High-quality text-to-image and inpainting from OpenAI. 
+∙ Midjourney and Dream by Wombo: AI art generation platforms. 
+6. Tools Used 
+∙ Pre-trained CLIP model from Hugging Face or OpenAI 
+∙ Diffusion models implemented in PyTorch or TensorFlow 
+∙ Google Colab for running GPU-based experiments 
+∙ Optional: FID calculation libraries (e.g., scikit-image, torch-fidelity) Conclusion: 
+In this experiment, students bridged the gap between language and vision by generating  images from natural language prompts using a CLIP-guided diffusion model. The ability to  generate semantically relevant images has broad implications in AI art, storytelling, content  creation, and human-computer interaction. This hands-on experience provides a solid 
+foundation in understanding how large-scale generative AI systems can interpret and  visualize human language. 
+

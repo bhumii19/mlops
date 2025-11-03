@@ -1,0 +1,104 @@
+# Import libraries
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# 1. Load dataset
+df = pd.read_csv("C:\\Users\\bhumi\\OneDrive\\Desktop\\netflix_titles.csv")
+print("Dataset preview:\n", df.head())
+
+# 2. Basic info
+print("\nDataset info:")
+print(df.info())
+
+# 3. Handle missing values (optional)
+df = df.dropna(subset=['type', 'release_year', 'rating', 'country'])
+
+# 4. Plot distribution of content types
+plt.figure(figsize=(6,4))
+sns.countplot(x='type', data=df, palette='coolwarm')
+plt.title('Distribution of Movies and TV Shows')
+plt.xlabel('Content Type')
+plt.ylabel('Count')
+plt.show()
+
+# 5. Plot top 10 countries with most content
+plt.figure(figsize=(8,5))
+top_countries = df['country'].value_counts().head(10)
+sns.barplot(x=top_countries.values, y=top_countries.index, palette='viridis')
+plt.title('Top 10 Countries with Most Netflix Content')
+plt.xlabel('Number of Titles')
+plt.ylabel('Country')
+plt.show()
+
+# 6. Plot histogram of release years
+plt.figure(figsize=(8,4))
+sns.histplot(df['release_year'], bins=20, kde=True, color='orange')
+plt.title('Content Release Year Distribution')
+plt.xlabel('Release Year')
+plt.ylabel('Count')
+plt.show()
+
+plt.figure(figsize=(7,5))
+sns.heatmap(numeric_df.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Heatmap of Netflix Dataset (Numeric Features)')
+plt.show()
+
+
+
+
+
+
+#
+Title: 
+Visualizing Data Distributions and Patterns in Generative AI Datasets using Matplotlib and  Seaborn 
+Objectives:
+To explore the statistical properties, relationships, and structures in generative AI datasets  through data visualization techniques using Matplotlib and Seaborn libraries. This includes  plotting histograms, scatter plots, and correlation heatmaps for enhanced data  understanding and model readiness. 
+Problem Statement: 
+Raw datasets often contain hidden issues like skewed distributions, biased categories, or  strongly correlated features, which can negatively impact model performance. Without  proper visualization, these patterns remain undetected. This experiment enables students  to use data visualization to uncover such issues, enabling better data preprocessing and  modeling decisions for generative AI projects. 
+Outcome: 
+By the end of this experiment, students will be able to: 
+∙ Create basic and advanced data visualizations using Matplotlib and Seaborn. ∙ Analyze feature distributions using histograms and box plots. 
+∙ Identify feature relationships using scatter plots.Detect inter-feature dependencies  with correlation heatmaps. 
+∙ Interpret visual insights to inform data preparation and model design. Theory: 
+1. Role of Data Visualization in Generative AI 
+Generative AI models such as GPT, DALL·E, and StyleGAN depend heavily on the statistical  structure and distribution of the training dataset. Before training such models, it is crucial to  visually inspect the data to ensure: 
+∙ No major class imbalance 
+∙ Features follow reasonable distributions 
+∙ Data is free from outliers or anomalies 
+2. Why Use Matplotlib and Seaborn? 
+a) Matplotlib
+A foundational plotting library in Python. 
+∙ Provides complete control over visualizations. 
+∙ Ideal for line plots, bar charts, histograms, and scatter plots. 
+∙ Allows customization of every visual element (colors, grids, legends, etc.). b) Seaborn 
+∙ Built on top of Matplotlib. 
+∙ Provides high-level, easy-to-use functions for statistical visualizations. ∙ Automatically styles plots to be more informative and aesthetically pleasing. ∙ Offers advanced charts like heatmaps, violin plots, and pair plots with minimal code. 
+Both libraries are commonly used in AI workflows due to their flexibility and effectiveness in  exploratory data analysis (EDA). 
+3. Common Visualization Techniques in Generative AI Contexts 
+Visualization  
+TypeDescription Use Case 
+
+HistogramA plot of frequency distribution for a  single variable. 
+Scatter Plot Plots values of two continuous  features against each other. 
+Check image size or pixel intensity  distribution in an image dataset. 
+Discover relationships between  variables, like object count vs.  brightness. 
+
+Correlation  Heatmap 
+Box Plot 
+A matrix displaying correlation  coefficients between all pairs of  numerical features. 
+Shows distribution and outliers of  numerical data across different  categories. 
+Detect multicollinearity in image  metadata or numeric inputs to a  model. 
+Compare average object count  across image categories. 
+
+4. Understanding Generative AI Dataset Examples 
+A typical generative AI dataset may include: 
+∙ Image metadata: width, height, brightness, object count, category ∙ 
+Text metadata: caption length, sentence complexity, sentiment score ∙ User information: preferences, feedback ratings 
+Before using this data to generate content (images, text, etc.), the following questions must  be answered visually:
+AISSMSIOIT Institute of Information Technology 2025 Pattern ∙ Do any features have abnormal values? 
+∙ Are features balanced or skewed? 
+∙ Are there strong linear correlations that could be removed or combined? ∙ Are any categories underrepresented or overrepresented? 
+For instance, if the brightness of 80% of images is clustered in a narrow range, the model  may fail to learn varied lighting patterns. 
+Conclusion: 
+Data visualization is an essential step in the generative AI pipeline. It helps uncover hidden  patterns, outliers, and feature relationships that directly impact the quality of AI-generated  content. By mastering tools like Matplotlib and Seaborn, students are better prepared to  handle real-world datasets and ensure they are suitable for building robust and accurate  generative models.

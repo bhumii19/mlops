@@ -1,0 +1,105 @@
+# 1. Install required libraries
+# !pip install transformers datasets evaluate rouge_score -q
+
+# 2. Import libraries
+from transformers import pipeline
+from datasets import load_dataset
+import evaluate
+
+# 3. Load dataset
+# Using CNN/DailyMail dataset for summarization and SQuAD for question answering
+summ_dataset = load_dataset("cnn_dailymail", "3.0.0", split="test[:2%]")
+qa_dataset = load_dataset("squad", split="validation[:2%]")
+
+# 4. Load pre-trained models for summarization and question answering
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+qa_pipeline = pipeline("question-answering", model="distilbert-base-cased-distilled-squad")
+
+# 5. Summarization Prompt Engineering
+text = summ_dataset[0]["article"]
+prompt = f"Summarize the following news article briefly:\n{text}"
+summary_output = summarizer(prompt, max_length=120, min_length=30, do_sample=False)
+generated_summary = summary_output[0]['summary_text']
+
+print("\n--- Summarization Task ---")
+print("Original Text:", text[:400], "...")
+print("Generated Summary:", generated_summary)
+
+# 6. Evaluate summarization using ROUGE
+rouge = evaluate.load("rouge")
+reference_summary = summ_dataset[0]["highlights"]
+results = rouge.compute(predictions=[generated_summary], references=[reference_summary])
+print("\nROUGE Scores:", results)
+
+# 7. Question Answering Prompt Engineering
+context = qa_dataset[0]["context"]
+question = qa_dataset[0]["question"]
+qa_prompt = f"Answer the following question based on the context:\nContext: {context}\nQuestion: {question}"
+answer = qa_pipeline(question=question, context=context)
+
+print("\n--- Question Answering Task ---")
+print("Context:", context[:300], "...")
+print("Question:", question)
+print("Predicted Answer:", answer["answer"])
+
+# 8. Evaluate QA using BLEU
+bleu = evaluate.load("bleu")
+reference_answer = [qa_dataset[0]["answers"]["text"][0]]
+prediction_answer = [answer["answer"]]
+bleu_score = bleu.compute(predictions=prediction_answer, references=[reference_answer])
+print("\nBLEU Score:", bleu_score)
+
+
+
+
+
+
+
+
+
+#
+Title: 
+Prompt Engineering for Large Language Models in Text Summarization and Question  Answering 
+Objective: 
+To design and test effective prompts for a pre-trained large language model (LLM) such as  GPT using Hugging Face’s Transformers library, and evaluate the model’s output for  summarization and question answering using BLEU or ROUGE metrics. 
+Problem Statement: 
+Large Language Models (LLMs) like GPT are capable of performing a wide range of tasks  depending on how they are prompted.. This experiment explores prompt engineering for  summarization and question answering, followed by quantitative evaluation using standard  NLP metrics. 
+Outcome: 
+By the end of this experiment, students will: 
+∙ Understand how to use pre-trained LLMs for downstream tasks without fine-tuning. ∙ Learn prompt engineering strategies to improve the quality of outputs. ∙ Generate summaries and answers using GPT-based models. 
+Theory: 
+1. Prompt Engineering and Zero-Shot Learning 
+Prompt engineering is the process of crafting input text that guides a language model to  perform a specific task. In zero-shot or few-shot learning settings, the model is not explicitly  fine-tuned on the task but can still generate relevant outputs based on how the input is  phrased.For example: 
+∙ Summarization Prompt: 
+"Summarize the following text:\n\n[Input Text]" 
+∙ Question Answering Prompt: 
+"Answer the question based on the context:\n\nContext: [Context Text]\nQuestion:  [Question] 
+2. Using Pre-trained GPT Models 
+Hugging Face’s transformers library provides access to various versions of GPT (like GPT-2,  GPT-Neo, GPT-J, etc.) and other instruction-following models like FLAN-T5 or LLaMA.
+These models are accessed using simple pipelines for tasks such as: 
+∙ Text Generation 
+∙ Summarization 
+∙ Question Answering 
+3. Evaluation Metrics: BLEU and ROUGE 
+BLEU (Bilingual Evaluation Understudy): 
+Used to evaluate the similarity between generated text and reference output. It measures  precision of n-grams and is more common in machine translation tasks. 
+BLEU=Precisionn×Brevity Penalty 
+ROUGE (Recall-Oriented Understudy for Gisting Evaluation): 
+More suitable for summarization. It measures the overlap of n-grams, word sequences, and  word pairs between the reference and the generated text. 
+Common variants: 
+∙ ROUGE-1: Overlap of unigrams. 
+∙ ROUGE-2: Overlap of bigrams. 
+∙ ROUGE-L: Longest common subsequence. 
+A higher ROUGE score indicates better alignment with human-written references. 4. Workflow of the Experiment 
+1. Dataset Selection: Choose a small dataset (e.g., news articles or QA pairs from  Hugging Face datasets like CNN/DailyMail or SQuAD). 
+2. Prompt Design: Create prompts for summarization and QA. 
+3. Model Selection: Load a pre-trained GPT-style model from Hugging Face. 
+4. Execution: Generate outputs using the pipeline API or model/tokenizer interface.
+ 5. Evaluation: Compare model outputs with ground-truth answers using BLEU/ROUGE.
+ 5. Tools Used 
+∙ Python and Jupyter/Colab for code execution 
+∙ Transformers library (by Hugging Face) 
+∙ Datasets library (by Hugging Face) 
+∙ NLP Evaluation Libraries: nltk, rouge_score, evaluate 
+Conclusion:
+This experiment demonstrates the power of prompt engineering in leveraging large pre trained models for summarization and question answering without fine-tuning. It also  introduces students to standard evaluation metrics that assess the quality of generated text  compared to human-written references—providing both practical skills and theoretical  insight into generative NLP. 

@@ -1,0 +1,127 @@
+# Import libraries
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+
+# 1. Load the dataset
+df = pd.read_csv("C:\\Users\\bhumi\\OneDrive\\Desktop\\gender_submission.csv")
+print("Original Dataset:\n", df.head())
+
+# 2. Handle Missing Values
+num_cols = df.select_dtypes(include=[np.number]).columns
+cat_cols = df.select_dtypes(include=['object']).columns
+
+# Replace numerical NaN with mean
+df[num_cols] = df[num_cols].fillna(df[num_cols].mean())
+
+# Replace categorical NaN with mode
+for col in cat_cols:
+    df[col].fillna(df[col].mode()[0], inplace=True)
+
+# 3. Normalize Numerical Features
+scaler = MinMaxScaler()
+df[num_cols] = scaler.fit_transform(df[num_cols])
+
+# 4. Encode Categorical Variables
+label_encoder = LabelEncoder()
+for col in cat_cols:
+    if df[col].nunique() == 2:
+        df[col] = label_encoder.fit_transform(df[col])
+
+# One-hot encode multi-category columns
+df = pd.get_dummies(df, columns=[col for col in cat_cols if df[col].nunique() > 2])
+
+# 5. Save cleaned dataset
+df.to_csv("titanic_cleaned.csv", index=False)
+print("\nPreprocessed Titanic dataset saved as titanic_cleaned.csv")
+print(df.head())
+
+OR
+
+# Import required libraries
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder, MinMaxScaler
+
+# Sample dataset
+data = {
+    'Name': ['A', 'B', 'C', 'D', 'E'],
+    'Age': [25, np.nan, 30, 22, 28],
+    'Gender': ['Male', 'Female', 'Female', 'Male', 'Female'],
+    'Salary': [50000, 54000, np.nan, 48000, 52000],
+    'City': ['Delhi', 'Mumbai', 'Delhi', 'Chennai', 'Kolkata']
+}
+
+df = pd.DataFrame(data)
+print("Original Dataset:\n", df)
+
+# 1. Handling Missing Values
+df['Age'].fillna(df['Age'].mean(), inplace=True)       # Replace missing age with mean
+df['Salary'].fillna(df['Salary'].median(), inplace=True)  # Replace missing salary with median
+
+# 2. Normalizing Numerical Features
+scaler = MinMaxScaler()
+df[['Age', 'Salary']] = scaler.fit_transform(df[['Age', 'Salary']])
+
+# 3. Encoding Categorical Variables
+# Label Encoding for Gender (ordinal or binary)
+label_encoder = LabelEncoder()
+df['Gender'] = label_encoder.fit_transform(df['Gender'])
+
+# One-Hot Encoding for City (nominal)
+df = pd.get_dummies(df, columns=['City'])
+
+print("\nPreprocessed Dataset:\n", df)
+
+
+
+
+
+
+
+#
+Title: 
+Data Preprocessing and Cleaning for Generative AI using Pandas and NumPy Objective: 
+To preprocess and clean datasets using Python libraries such as Pandas and NumPy,  including handling missing values, normalizing numerical features, and encoding categorical  variables — all essential for preparing data for generative AI applications. 
+Problem Statement: 
+Raw datasets collected from real-world sources often contain inconsistencies such as  missing values, unscaled numerical data, or unprocessed categorical features. Generative AI,  especially in applications like text-to-image generation, automated content creation, and  synthetic data generation, relies heavily on structured, clean, and normalized inputs. This  experiment focuses on addressing these challenges through proper preprocessing  techniques. 
+Outcome: 
+By the end of this experiment, students will be able to: 
+∙ Understand the structure and characteristics of datasets used in generative AI. ∙ Apply data cleaning operations to handle missing or invalid values. ∙ Normalize numerical features to ensure uniform scale. 
+Theory: 
+1. What is Data Preprocessing? 
+Data preprocessing is a set of techniques used to transform raw data into a clean and  structured format suitable for machine learning or deep learning models. In the context of  Generative AI, preprocessing ensures that input data adheres to the required format,  quality, and consistency, allowing the models to generate meaningful and realistic outputs. 
+2. Why Preprocessing is Crucial in Generative AI 
+Generative models, such as: 
+∙ GPT (for text generation) 
+∙ StyleGAN (for realistic image synthesis) 
+are data-driven and highly sensitive to input formats. Poorly preprocessed data can  result in: 
+∙ Incorrect or nonsensical outputs. 
+3. Key Preprocessing Steps
+a) Handling Missing Data 
+Missing values are common and must be addressed before model training. Common  techniques include: 
+∙ Removal: Eliminate rows or columns with missing values (df.dropna()). ∙ Imputation: Replace missing values with: 
+o Mean or Median for numerical columns. 
+o Mode for categorical columns. 
+b) Normalization and Scaling 
+Neural networks perform better when features are scaled to a common range. This is  especially important in image metadata, where pixel values or sizes may vary greatly. 
+c) Encoding Categorical Variables 
+Since machine learning models require numerical input, categorical variables must be  converted into numbers: 
+∙ Label Encoding: 
+Assigns an integer to each category. Suitable for ordinal data. 
+∙ One-Hot Encoding: 
+Converts categories into binary columns. Preferred for nominal data. 
+Example: 
+Category = ["cat", "dog", "bird"] 
+→ One-hot: [1,0,0], [0,1,0], [0,0,1] 
+4. Tools Overview 
+∙ Pandas: A Python library used for data manipulation and analysis. It offers Data Frame structures with powerful functions for cleaning and transforming data. 
+∙ NumPy: Useful for numerical computations and array manipulation, especially for  operations under the hood of Pandas or for direct tensor manipulation in workflows. 
+5. Generative AI Context 
+In Generative AI applications: 
+∙ Clean text datasets help in generating grammatically correct and context-aware  sentences. 
+∙ Normalized image metadata improves the quality of image generation. 
+∙ Encoded user preferences or categories enable models to conditionally generate  content. 
+Conclusion: 
+Data preprocessing is not just a preliminary step but a critical phase that determines the  quality and relevance of outputs from generative AI systems. By mastering cleaning 
+ techniques using Pandas and NumPy, students are better equipped to prepare datasets that  fuel effective model training and realistic generation in downstream tasks. 

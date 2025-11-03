@@ -1,0 +1,199 @@
+# Install required packages (run once)
+# pip install sentence-transformers faiss-cpu transformers datasets torch -q
+
+from typing import List, Tuple
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+from datasets import load_dataset
+import torch
+
+# ------------- Config -------------
+EMBED_MODEL_NAME = "all-MiniLM-L6-v2"    # lightweight embedder
+GEN_MODEL_NAME = "google/flan-t5-small"  # small seq2seq model (better for instruction prompts)
+DATASET_NAME = "ag_news"                 # example dataset (short news articles)
+SPLIT_SIZE = 500                         # number of documents to index (small demo)
+EMBED_DIM = 384                          # embedding dim for all-MiniLM-L6-v2
+TOP_K = 4                                # how many docs to retrieve
+MAX_CONTEXT_TOKENS = 512                 # max tokens to feed generator in prompt
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# ----------------------------------
+
+def load_documents(dataset_name=DATASET_NAME, split_size=SPLIT_SIZE) -> List[str]:
+    """
+    Loads a small collection of text documents from the datasets library.
+    Returns a list of document strings.
+    """
+    ds = load_dataset(dataset_name, split=f"train[:{split_size}]")
+    docs = []
+    if "text" in ds.column_names:
+        docs = [str(x["text"]) for x in ds]
+    elif "description" in ds.column_names:
+        docs = [str(x["description"]) for x in ds]
+    else:
+        # fallback: join columns
+        for row in ds:
+            docs.append(" ".join([str(v) for v in row.values()]))
+    return docs
+
+def build_faiss_index(docs: List[str],
+                      embed_model_name: str = EMBED_MODEL_NAME,
+                      embed_dim: int = EMBED_DIM) -> Tuple[faiss.IndexFlatIP, np.ndarray, SentenceTransformer]:
+    """
+    Computes embeddings with SentenceTransformer and builds a FAISS index (inner product, with normalized vectors).
+    Returns (index, embeddings_array, embedder_instance).
+    """
+    embedder = SentenceTransformer(embed_model_name, device=DEVICE)
+    # compute embeddings (as float32)
+    embeddings = embedder.encode(docs, convert_to_numpy=True, show_progress_bar=True, batch_size=64)
+    # normalize for cosine similarity via inner product
+    faiss.normalize_L2(embeddings)
+    index = faiss.IndexFlatIP(embed_dim)  # inner-product index (cosine with normalized vectors)
+    index.add(embeddings)
+    return index, embeddings, embedder
+
+def retrieve(index: faiss.IndexFlatIP, 
+             query: str,
+             embedder: SentenceTransformer,
+             docs: List[str],
+             top_k: int = TOP_K) -> List[Tuple[int, float, str]]:
+    """
+    Retrieve top_k documents for the query.
+    Returns list of (doc_index, score, doc_text).
+    """
+    q_emb = embedder.encode([query], convert_to_numpy=True)
+    faiss.normalize_L2(q_emb)
+    scores, indices = index.search(q_emb, top_k)
+    results = []
+    for idx, score in zip(indices[0], scores[0]):
+        if idx == -1:
+            continue
+        results.append((int(idx), float(score), docs[int(idx)]))
+    return results
+
+def build_prompt(question: str, retrieved: List[Tuple[int, float, str]], max_context_tokens: int = MAX_CONTEXT_TOKENS) -> str:
+    """
+    Format a prompt for the generator model by concatenating top retrieved docs as context.
+    Keeps prompt succinct. For T5-style instruction models we use an instruction + context + question layout.
+    """
+    context_pieces = []
+    for i, (_, score, doc) in enumerate(retrieved):
+        # truncate each doc to a reasonable length (characters)
+        part = doc.strip().replace("\n", " ")
+        if len(part) > 800:
+            part = part[:800] + "..."
+        context_pieces.append(f"[Doc {i+1} | score={score:.3f}]: {part}")
+    context = "\n\n".join(context_pieces)
+    prompt = (
+        "You are an assistant that answers user questions using the provided context. "
+        "Use only the context when answering; do not invent facts.\n\n"
+        f"Context:\n{context}\n\n"
+        f"Question: {question}\n\nAnswer:"
+    )
+    # (We could also apply token-aware truncation using the tokenizer if needed)
+    return prompt
+
+def initialize_generator(model_name: str = GEN_MODEL_NAME, device: str = DEVICE):
+    """
+    Initialize seq2seq generator (Flan-T5). Returns tokenizer and model pipeline.
+    """
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
+    gen = pipeline("text2text-generation", model=model, tokenizer=tokenizer, device=0 if device.startswith("cuda") else -1)
+    return gen
+
+def generate_answer(generator_pipeline, prompt: str, max_length: int = 200, num_beams: int = 4) -> str:
+    """
+    Generate an answer using the seq2seq pipeline.
+    """
+    out = generator_pipeline(prompt, max_length=max_length, num_beams=num_beams, do_sample=False)[0]
+    return out["generated_text"].strip()
+
+# ---------------- Demo ----------------
+def demo():
+    print("Device:", DEVICE)
+    print("Loading documents...")
+    docs = load_documents()
+    print(f"Loaded {len(docs)} documents.")
+
+    print("Building FAISS index with embeddings...")
+    index, embeddings, embedder = build_faiss_index(docs)
+
+    print("Initializing generator model...")
+    generator = initialize_generator()
+
+    # Example interactive loop (one question demonstration)
+    question = "Which company is associated with the product named 'Apple iPhone'?"
+    print("\nUser question:", question)
+
+    retrieved = retrieve(index, question, embedder, docs, top_k=TOP_K)
+    print("\nTop retrieved documents (index, score):")
+    for idx, score, doc in retrieved:
+        print(f"  - {idx} (score={score:.3f}) -> {doc[:140].replace('\\n',' ')}...")
+
+    prompt = build_prompt(question, retrieved)
+    print("\nPrompt passed to generator (truncated to 800 chars):")
+    print(prompt[:800] + ("..." if len(prompt) > 800 else ""))
+
+    print("\nGenerating answer...")
+    answer = generate_answer(generator, prompt)
+    print("\nGenerated Answer:\n", answer)
+
+if __name__ == "__main__":
+    demo()
+
+
+
+
+
+
+
+
+
+
+#
+Title: 
+Implementing Retrieval-Augmented Generation (RAG) with FAISS and a Pre-trained LLM Objective: 
+To implement a Retrieval-Augmented Generation (RAG) pipeline using a lightweight vector  database such as FAISS and a small pre-trained large language model (LLM). The goal is to  retrieve relevant documents and generate contextually accurate answers using the  combined power of information retrieval and generative AI. 
+Problem Statement: 
+Retrieval-Augmented Generation (RAG) addresses this by retrieving relevant documents and  using them as input context for a generative model. This experiment aims to build a RAG  system using FAISS for document retrieval and a pre-trained LLM (e.g., DistilGPT-2 or T5) for  generating responses. 
+Outcome: 
+By the end of this experiment, students will: 
+∙ Understand the RAG architecture and its practical benefits. 
+∙ Use FAISS to store and retrieve document embeddings. 
+∙ Integrate document retrieval with a pre-trained LLM for enhanced text generation. Theory: 
+1. What is RAG (Retrieval-Augmented Generation)? 
+RAG is a hybrid approach that combines: 
+∙ Dense retrieval: using vector search (e.g., FAISS) to retrieve relevant passages based  on a query. 
+∙ Text generation: using an LLM to generate a coherent response using both the input  query and the retrieved content. 
+2. Components of a RAG System 
+A. Document Store (Knowledge Base): 
+A collection of documents or text passages is embedded into vector representations using  sentence embeddings (e.g., using SentenceTransformer). 
+B. FAISS (Facebook AI Similarity Search):
+FAISS is a high-performance library for similarity search and clustering of dense vectors. It  allows fast and scalable vector-based search for relevant documents. 
+Steps: 
+∙ Convert documents into vectors 
+∙ Index these vectors in FAISS 
+∙ Query the index to retrieve top-k similar documents 
+C. Pre-trained LLM: 
+A small pre-trained language model (e.g., DistilGPT-2, T5, FLAN-T5, etc.) generates the final  output by conditioning on both the user query and the retrieved documents. 
+3. How RAG Works:
+ Step-by-Step 
+1. Input Query: User submits a question or input. 
+2. Vectorization: The query is embedded into a dense vector. 
+3. Retrieval with FAISS: Use the query vector to retrieve the top-k most relevant  document vectors. 
+4. Concatenation: The query and retrieved text are concatenated to form a prompt. 5. Generation: The LLM generates an answer based on this extended context. 
+4. Benefits of RAG in Generative AI 
+∙ Reduces Hallucination: LLMs are grounded in actual data. 
+∙ Improves Accuracy: Contextually relevant and updated facts are included. ∙ Data-Efficient: No need for full fine-tuning—knowledge is dynamically retrieved. 5. Tools and Libraries Used 
+∙ sentence-transformers: For generating document and query embeddings ∙ faiss: To build the vector index and perform similarity search 
+∙ transformers: To load and run pre-trained language models 
+∙ datasets: (optional) For using or preparing document datasets 
+∙ evaluate or nltk: For basic text evaluation 
+6. Example Use Cases of RAG 
+∙ Open-domain Question Answering 
+∙ Personalized Chatbots 
+∙ Legal/Medical Document Summarization 
+Conclusion:
+This experiment introduces students to the practical implementation of Retrieval Augmented Generation, a powerful technique that combines retrieval and generation to  produce more reliable, fact-grounded answers. Through the integration of FAISS and a pre trained LLM, students gain experience in building intelligent systems capable of retrieving  context and generating high-quality natural language outputs. 
