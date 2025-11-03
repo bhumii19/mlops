@@ -1,0 +1,101 @@
+# -----------------------------------------------
+# Word Embeddings and Semantic Similarity Search using FAISS
+# -----------------------------------------------
+
+# Step 1: Install required libraries
+#pip install sentence-transformers faiss-cpu
+#pip install tf-keras
+
+# Step 2: Import libraries
+from sentence_transformers import SentenceTransformer
+import faiss
+import numpy as np
+
+# Step 3: Create sample text data
+sentences = [
+    "Artificial Intelligence is transforming the world.",
+    "Machine learning enables computers to learn from data.",
+    "Deep learning is a subset of machine learning.",
+    "Natural Language Processing helps computers understand human language.",
+    "Computer vision allows machines to see and interpret visual data.",
+    "Generative AI models can create images, text, and music."
+]
+
+# Step 4: Generate embeddings using pre-trained SentenceTransformer model
+model = SentenceTransformer('all-MiniLM-L6-v2')
+embeddings = model.encode(sentences, normalize_embeddings=True)
+print("Embeddings shape:", embeddings.shape)
+
+# Step 5: Create FAISS index for similarity search
+dimension = embeddings.shape[1]  # size of each embedding vector
+index = faiss.IndexFlatL2(dimension)  # L2 distance metric
+index.add(np.array(embeddings))  # add all embeddings to index
+print("Total sentences indexed:", index.ntotal)
+
+# Step 6: Perform semantic similarity search
+query = "AI can understand text and generate images."
+query_vector = model.encode([query], normalize_embeddings=True)
+
+# Number of similar sentences to retrieve
+k = 3
+distances, indices = index.search(np.array(query_vector), k)
+
+# Step 7: Display results
+print("\nQuery:", query)
+print("\nTop 3 most similar sentences:\n")
+for i, idx in enumerate(indices[0]):
+    print(f"{i+1}. {sentences[idx]} (Similarity Score: {1 - distances[0][i]:.4f})")
+
+
+
+
+
+
+
+
+
+#
+Title: 
+Implementing Word Embeddings and Semantic Similarity Search using FAISS Objective: 
+To understand and implement word embeddings such as Word2Vec or GloVe on a small text  corpus, and use a lightweight vector database like FAISS to perform similarity search and  analyze semantic relationships between words. 
+Problem Statement: 
+Word embeddings solve this by mapping words to dense vector spaces where semantic  similarity is preserved. However, searching through these high-dimensional vectors  efficiently requires specialized vector databases. This experiment introduces word  embedding models and vector search using FAISS to help students build semantic search  systems and better understand embedding-based generative models. 
+Outcome: 
+By the end of this experiment, students will be able to: 
+∙ Train or load pretrained word embeddings (Word2Vec or GloVe). 
+∙ Represent words as dense numerical vectors. 
+∙ Use FAISS (Facebook AI Similarity Search) to perform fast nearest neighbor queries. 
+∙ Analyze and interpret semantic relationships using vector similarity (cosine or  Euclidean). 
+Theory: 
+1. What are Word Embeddings? 
+Word embeddings are dense vector representations of words where words with similar  meanings have similar vectors. These embeddings are learned from large corpora using  models that capture the distributional hypothesis: words that appear in similar contexts  tend to have similar meanings. 
+There are two main types: 
+∙ Word2Vec (Google) – Learns word embeddings using skip-gram or CBOW  (continuous bag of words) models. 
+∙ GloVe (Stanford) – Learns embeddings based on global word co-occurrence statistics  in a corpus. 
+2. Why Embeddings Matter in Generative AI
+Generative models (text-to-text, text-to-image, etc.) often rely on embeddings to: 
+∙ Represent input/output text in latent space. 
+∙ Transfer semantic context across modalities. 
+For example: 
+∙ In text generation, embedding vectors help the model maintain semantic  consistency. 
+∙ In retrieval-augmented generation (RAG), similarity search over embeddings  retrieves the most relevant context for generation. 
+3. Similarity Search and FAISS 
+FAISS (Facebook AI Similarity Search) is an open-source library for fast similarity search in  large datasets of high-dimensional vectors. It enables: 
+∙ Efficient Nearest Neighbor Search 
+∙ Fast indexing and querying of embeddings 
+Similarity Metrics: 
+∙ Cosine Similarity – Measures the angle between two vectors; best for semantic  similarity. 
+∙ Euclidean Distance – Measures straight-line distance between two vectors. 
+4. Workflow of the Experiment 
+1. Prepare a Small Text Corpus 
+A simple dataset like news headlines, tweets, or paragraphs from Wikipedia. 2. Train or Load Word Embeddings 
+3. Convert Words to Vectors 
+Every word in the vocabulary is mapped to a vector of size 100–300 dimensions. 4. Build FAISS Index 
+5. Applications in Real-World Generative AI 
+∙ Semantic Search Systems: Enhance chatbots or question-answering systems. 
+∙ Context Retrieval in LLMs: Retrieve relevant documents or keywords based on  semantic similarity. 
+∙ Prompt Optimization: Improve prompt quality by using semantically similar  keywords. 
+∙ Multimodal Generative AI: Map text embeddings to visual/audio latent spaces. Conclusion: 
+This experiment introduced students to the concept of word embeddings and their use in  representing semantic meaning. Through FAISS, students learned how to efficiently perform  similarity search in high-dimensional vector spaces. These skills are critical in designing 
+generative AI systems that rely on understanding and navigating semantic relationships  between words or concepts. 
+

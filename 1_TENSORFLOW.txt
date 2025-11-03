@@ -1,0 +1,91 @@
+# Import TensorFlow
+import tensorflow as tf
+
+# Enable eager execution (default in TensorFlow 2)
+print("Eager Execution:", tf.executing_eagerly())
+
+# 1. Tensor Creation
+a = tf.constant([[1, 2], [3, 4]], dtype=tf.float32)
+b = tf.constant([[5, 6], [7, 8]], dtype=tf.float32)
+
+print("\nTensor a:\n", a)
+print("Tensor b:\n", b)
+
+# 2. Basic Operations
+add_result = tf.add(a, b)
+mul_result = tf.multiply(a, b)
+matmul_result = tf.matmul(a, b)
+
+print("\nAddition:\n", add_result)
+print("Element-wise Multiplication:\n", mul_result)
+print("Matrix Multiplication:\n", matmul_result)
+
+# 3. Tensor Manipulation
+reshape_a = tf.reshape(a, [4, 1])
+transpose_b = tf.transpose(b)
+
+print("\nReshaped a:\n", reshape_a)
+print("Transposed b:\n", transpose_b)
+
+# 4. Computation Graph with @tf.function
+@tf.function
+def compute_graph(x, y):
+    return tf.matmul(x, y) + tf.add(x, y)
+
+result_graph = compute_graph(a, b)
+print("\nResult using Computation Graph:\n", result_graph)
+
+# 5. Dynamic Computation using Eager Execution
+for i in range(1, 4):
+    c = tf.constant(i, dtype=tf.float32)
+    print(f"\nIteration {i}: a * {i} =\n", a * c)
+
+# 6. Tensor Statistics
+print("\nMean of a:", tf.reduce_mean(a))
+print("Max of b:", tf.reduce_max(b))
+print("Sum of b:", tf.reduce_sum(b))
+
+
+
+
+
+#
+Title: 
+Working with Tensors in TensorFlow 2: Creation, Manipulation, and Eager Execution Objective: 
+To write Python scripts demonstrating the creation, manipulation, and computation using  TensorFlow 2 tensors, and to explore the concept of eager execution for dynamic  computation graphs. 
+Problem Statement: 
+TensorFlow is one of the most widely used deep learning frameworks for building AI models,  including generative models. At its core, TensorFlow operates on tensors. However,  students often find it difficult to understand how tensors work and how computations are  carried out dynamically in TensorFlow 2. This experiment aims to provide a hands-on  introduction to working with tensors and understanding dynamic computation with eager  execution. 
+Outcome: 
+By the end of this experiment, students will be able to: 
+∙ Create tensors using various TensorFlow functions. 
+∙ Perform basic tensor manipulations and arithmetic operations. 
+∙ Understand the role of computation graphs in TensorFlow. 
+Theory: 
+1. Tensors – The Building Blocks of TensorFlow 
+A tensor is a generalization of vectors and matrices to potentially higher dimensions. In  simple terms, it is a multi-dimensional array. Tensors are the primary data structure in  TensorFlow and are used to represent all forms of data — inputs, outputs, weights, etc.  Depending on their shape, tensors can be: 
+∙ Scalars (0-D) 
+∙ Vectors (1-D) 
+∙ Matrices (2-D) 
+∙ Higher-Dimensional Tensors (3D, 4D, etc.) 
+TensorFlow provides various methods to create tensors, such as: 
+∙ tf.constant() – creates constant tensors. 
+∙ tf.zeros() / tf.ones() – creates tensors filled with zeros or ones.
+2. Tensor Manipulation and Operations 
+Once tensors are created, they can be manipulated in several ways: 
+∙ Reshaping: Changing the shape of a tensor using tf.reshape(). 
+∙ Slicing and Indexing: Extracting parts of a tensor. 
+∙ Broadcasting: Automatically expanding dimensions during arithmetic operations. 
+These manipulations are essential for preparing data before feeding it into a neural network  or processing its outputs. 
+3. Computation Graphs in TensorFlow 
+TensorFlow was originally designed to use static computation graphs, which define all  operations before running them. However, TensorFlow 2 introduced eager execution as the  default mode. With eager execution, operations are evaluated immediately — just like in  regular Python code — which makes it easier to debug and experiment. 
+A computation graph is a set of operations arranged into a graph, where nodes represent  operations and edges represent data (tensors). This abstraction allows TensorFlow to  optimize execution, parallelize computations, and deploy models efficiently. 
+4. Eager Execution 
+Eager execution is an imperative programming environment that evaluates operations  immediately. This is especially helpful for: 
+∙ Debugging 
+∙ Rapid prototyping 
+∙ Interactive development (e.g., in Jupyter notebooks) 
+Eager execution lets developers write code in a natural way, making it easier to understand  tensor shapes, types, and transformations during model development. 
+5. Importance in Generative AI 
+Understanding tensor operations is fundamental to working with generative models such as  GANs, VAEs, and Transformer-based models. These models involve complex computations  on tensors across multiple layers. Mastery of basic tensor operations and eager execution  forms the foundation for building and training these advanced models. 
+Conclusion: 
+This experiment introduced the core concepts of tensors in TensorFlow 2. Students learned  about tensor creation, manipulation, and how dynamic computation is enabled through  eager execution. These skills are foundational for implementing and understanding more  advanced generative AI models in upcoming experiments.
